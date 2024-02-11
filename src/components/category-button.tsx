@@ -6,7 +6,7 @@ type CategoryButtonProps = PressableProps & {
   isSelected?: boolean;
 };
 
-export default function CategoryButton({
+export function CategoryButton({
   title,
   isSelected,
   ...rest
