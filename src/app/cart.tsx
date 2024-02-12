@@ -1,4 +1,6 @@
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { useState } from 'react';
+import { useNavigation } from 'expo-router';
+import { Alert, Linking, ScrollView, Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 import { ProductCartProps, useCartStore } from '@/stores/cart-store';
@@ -12,7 +14,11 @@ import { Button } from '@/components/button';
 import { Feather } from '@expo/vector-icons';
 import { LinkButton } from '@/components/link-button';
 
+const PHONE_NUMBER = ''; // Ex: 55999999999
+
 export default function Cart() {
+  const [address, setAddress] = useState('');
+  const navigation = useNavigation();
   const cartStore = useCartStore();
 
   const total = formatCurrency(
@@ -32,6 +38,25 @@ export default function Cart() {
         onPress: () => cartStore.remove(product.id),
       },
     ]);
+  }
+
+  function handleOrder() {
+    if (address.trim().length === 0) {
+      return Alert.alert('Pedido', 'Informe os dados da entrega.');
+    }
+
+    const products = cartStore.products
+      .map((product) => `\n ${product.quantity} ${product.title}`)
+      .join('');
+
+    const message = `🍔 *NOVO PEDIDO* 🍟\n\n*Entregar em*: ${address} \n ${products} \n\n Total: *${total}*`;
+
+    Linking.openURL(
+      `http://api.whatsapp.com/send?phone=${PHONE_NUMBER}&text=${message}`
+    );
+
+    cartStore.clear();
+    navigation.goBack();
   }
 
   return (
@@ -68,13 +93,18 @@ export default function Cart() {
               </Text>
             </View>
 
-            <Input placeholder='Informe o endereço de entrega com rua, bairro, número, CEP e complemento...' />
+            <Input
+              placeholder='Informe o endereço de entrega com rua, bairro, número, CEP e complemento...'
+              onChangeText={setAddress}
+              blurOnSubmit
+              onSubmitEditing={handleOrder}
+            />
           </View>
         </ScrollView>
       </KeyboardAwareScrollView>
 
       <View className='p-5 gap-5'>
-        <Button>
+        <Button onPress={handleOrder}>
           <Button.Text>Enviar pedido</Button.Text>
 
           <Button.Icon>
